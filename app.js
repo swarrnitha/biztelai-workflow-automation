@@ -130,7 +130,13 @@ async function runOpenRouterExtraction() {
 
   try {
     const dataUrl = await fileToDataUrl(currentFile);
-    const aiFields = await extractWithOpenRouter({ apiKey, model, dataUrl, fileName: currentFile.name });
+    const aiFields = await extractWithOpenRouter({
+      apiKey,
+      model,
+      dataUrl,
+      fileName: currentFile.name,
+      mimeType: currentFile.type || "",
+    });
     currentRecord = createRecord(currentFile.name, withConfidence(aiFields.fields, aiFields.rawText || "OpenRouter vision extraction", 84), "Needs review", `OpenRouter ${model}`);
 
     if (aiFields.confidence) {
@@ -150,7 +156,7 @@ async function runOpenRouterExtraction() {
   }
 }
 
-async function extractWithOpenRouter({ apiKey, model, dataUrl, fileName }) {
+async function extractWithOpenRouter({ apiKey, model, dataUrl, fileName, mimeType }) {
   const prompt = `Extract a manufacturing operational record from this uploaded document.
 Return only valid JSON, with no markdown.
 Use this exact shape:
@@ -178,6 +184,25 @@ Use this exact shape:
 }
 If handwriting is unclear, leave the field empty and use low confidence. File name: ${fileName}`;
 
+  const contentParts = [
+    { type: "text", text: prompt },
+  ];
+
+  if (mimeType === "application/pdf" || fileName.toLowerCase().endsWith(".pdf")) {
+    contentParts.push({
+      type: "file",
+      file: {
+        filename: fileName,
+        file_data: dataUrl,
+      },
+    });
+  } else {
+    contentParts.push({
+      type: "image_url",
+      image_url: { url: dataUrl },
+    });
+  }
+
   const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
     method: "POST",
     headers: {
@@ -191,11 +216,14 @@ If handwriting is unclear, leave the field empty and use low confidence. File na
       messages: [
         {
           role: "user",
-          content: [
-            { type: "text", text: prompt },
-            { type: "image_url", image_url: { url: dataUrl } },
-          ],
+          content: contentParts,
         },
+      ],
+      response_format: {
+        type: "json_object",
+      },
+      plugins: [
+        { id: "response-healing" },
       ],
       temperature: 0.1,
       max_tokens: 900,
