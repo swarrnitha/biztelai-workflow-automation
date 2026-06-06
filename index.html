@@ -29,7 +29,6 @@
           <p class="eyebrow">AI-powered workflow automation</p>
           <h1>Digitize shop-floor records into validated operational data</h1>
         </div>
-        <button id="seedDemo" class="secondary">Load demo records</button>
       </section>
 
       <section id="upload" class="panel">
@@ -53,24 +52,8 @@
             <iframe id="pdfPreview" title="PDF preview" hidden></iframe>
           </div>
         </div>
-        <div class="ocr-box">
-          <label for="ocrText">OCR / transcribed text</label>
-          <textarea id="ocrText" rows="6" placeholder="Paste OCR text here if available. Example: Date 2026-06-04 Shift B Emp E1042 Op OP-220 Machine MC-014 WO WO-78213 Qty 1240 Time 6.5"></textarea>
-          <div class="ai-config">
-            <div>
-              <label for="openRouterKey">OpenRouter API key</label>
-              <input id="openRouterKey" type="password" placeholder="Paste sk-or-v1... key for this browser session" autocomplete="off" />
-            </div>
-            <div>
-              <label for="openRouterModel">Vision model</label>
-              <input id="openRouterModel" value="google/gemini-2.5-flash" />
-            </div>
-          </div>
-          <div class="actions">
-            <button id="sampleText" class="secondary">Insert sample OCR text</button>
-            <button id="runAiExtraction" class="secondary">Extract from image with AI</button>
-            <button id="runExtraction">Run extraction</button>
-          </div>
+        <div class="actions" style="margin-top:18px">
+          <button id="runAiExtraction">Extract from image with AI</button>
         </div>
       </section>
 
@@ -78,11 +61,31 @@
         <div class="section-head">
           <div>
             <p class="eyebrow">02 Review</p>
-            <h2>Extracted Record</h2>
+            <h2>Machine Shop Data</h2>
           </div>
-          <span id="recordState" class="pill warn">Awaiting extraction</span>
+          <div class="section-head-actions">
+            <span id="recordState" class="pill warn">Awaiting extraction</span>
+          </div>
         </div>
-        <div id="reviewForm" class="form-grid"></div>
+        <div class="table-wrap">
+          <table class="review-table" id="reviewTable">
+            <thead>
+              <tr>
+                <th>S.No</th>
+                <th>Date</th>
+                <th>Shift</th>
+                <th>Emp. No</th>
+                <th>Opn Code</th>
+                <th>Machine No.</th>
+                <th>Work Order No.</th>
+                <th>Qty. Prod.</th>
+                <th>Time taken (hrs)</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="reviewBody"></tbody>
+          </table>
+        </div>
         <div class="validation-layout">
           <div>
             <h3>Validation Exceptions</h3>
@@ -94,7 +97,8 @@
           </div>
         </div>
         <div class="actions">
-          <button id="saveRecord">Save reviewed record</button>
+          <button id="exportExcel" class="secondary">Export to Excel</button>
+          <button id="saveRecord">Save all records</button>
           <button id="clearCurrent" class="secondary">Clear current</button>
         </div>
       </section>
