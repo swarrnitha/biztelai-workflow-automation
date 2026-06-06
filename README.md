@@ -70,6 +70,20 @@ For handwritten/image-only files where browser JavaScript cannot directly OCR wi
 
 This can be deployed to any static hosting provider such as Netlify, Vercel, GitHub Pages, or Cloudflare Pages.
 
+Recommended GitHub repository:
+
+```text
+https://github.com/swarrnitha/biztelai-workflow-automation
+```
+
+Expected GitHub Pages URL after deployment:
+
+```text
+https://swarrnitha.github.io/biztelai-workflow-automation/
+```
+
+This repository includes `.github/workflows/pages.yml`, which deploys the static app to GitHub Pages whenever code is pushed to `master` or `main`.
+
 ## Demo Video Checklist
 
 Cover these steps in the mandatory demo video:
