@@ -7,6 +7,7 @@ AI-powered workflow automation prototype for digitizing handwritten or semi-stru
 - Upload image or PDF documents.
 - Preview uploaded files in the browser.
 - Parse OCR/transcribed text into a structured manufacturing record.
+- Optional real AI image/PDF extraction through OpenRouter vision models.
 - Deterministic fallback extraction for image-only handwritten documents so the workflow remains demoable without paid OCR credentials.
 - Editable review form with field-level confidence scores.
 - Validation rules for mandatory fields, shift values, machine/work-order formats, suspicious quantities, time ranges, and duplicate work orders.
@@ -30,11 +31,12 @@ Then open the shown local URL.
 
 1. Upload an image or PDF.
 2. Paste OCR/transcribed text if available, or click `Insert sample OCR text`.
-3. Click `Run extraction`.
-4. Review extracted fields and low-confidence indicators.
-5. Correct invalid fields.
-6. Save the reviewed record.
-7. Use dashboard and history sections to inspect operational data.
+3. For text parsing, click `Run extraction`.
+4. For AI image extraction, paste an OpenRouter API key, keep the model as `google/gemini-2.5-flash` or change it to another vision model, then click `Extract from image with AI`.
+5. Review extracted fields and low-confidence indicators.
+6. Correct invalid fields.
+7. Save the reviewed record.
+8. Use dashboard and history sections to inspect operational data.
 
 ## Extraction Approach
 
@@ -51,17 +53,22 @@ The prototype uses a client-side text parser for common operational document pat
 
 For handwritten/image-only files where browser JavaScript cannot directly OCR without a model or external service, the app generates a deterministic low-confidence extraction from the file name. This keeps the entire product flow testable while clearly flagging lower-confidence fields for manual review.
 
+The app also includes an optional OpenRouter extraction mode. It sends the uploaded image or PDF as a base64 data URL to OpenRouter's chat completions API with a vision-capable model and asks for strict JSON output matching the operational schema.
+
+The OpenRouter key is entered by the user in the browser and stored only in `sessionStorage`. It is not committed to GitHub. For a production system, this call should move behind a backend or serverless function so the API key is never exposed in browser developer tools.
+
 ## Architecture
 
 - `index.html`: application layout and workflow sections.
 - `styles.css`: responsive operational UI styling.
 - `app.js`: upload handling, preview, extraction, confidence scoring, validation, persistence, dashboard analytics, and history search.
 - Browser `localStorage`: lightweight prototype persistence.
+- Browser `sessionStorage`: temporary OpenRouter API key storage for demo use.
 
 ## Assumptions and Tradeoffs
 
 - This is a working prototype, not a production OCR service.
-- Real OCR/LLM extraction can be added behind the same schema by replacing `parseText` / `generateFallback` with an API call.
+- Real OCR/LLM extraction is included as an optional OpenRouter browser call, but production deployments should proxy this through a backend.
 - Uploaded files are previewed locally and are not sent to a backend.
 - Data persistence is browser-local to keep setup and hosting simple.
 - Duplicate detection is performed on reviewed records by work order number.
@@ -89,7 +96,7 @@ This repository includes `.github/workflows/pages.yml`, which deploys the static
 Cover these steps in the mandatory demo video:
 
 1. Upload an image or PDF and show preview.
-2. Insert or paste OCR text and run extraction.
+2. Insert or paste OCR text and run extraction, or paste an OpenRouter key and run AI extraction.
 3. Show confidence scores and validation exceptions.
 4. Correct a field and save the reviewed record.
 5. Open dashboard analytics.

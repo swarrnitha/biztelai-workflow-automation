@@ -209,6 +209,13 @@ h3 {
   margin-top: 18px;
 }
 
+.ai-config {
+  display: grid;
+  grid-template-columns: 1fr minmax(220px, 320px);
+  gap: 14px;
+  margin-top: 14px;
+}
+
 label {
   display: block;
   font-weight: 700;
@@ -453,7 +460,8 @@ th {
 
   .upload-grid,
   .validation-layout,
-  .charts {
+  .charts,
+  .ai-config {
     grid-template-columns: 1fr;
   }
 

@@ -1,5 +1,6 @@
 const STORAGE_KEY = "biztelai_opsflow_records_v1";
 const UPLOAD_KEY = "biztelai_opsflow_uploads_v1";
+const OPENROUTER_KEY = "biztelai_openrouter_key_session";
 
 const schema = [
   { key: "date", label: "Date", type: "date", required: true },
@@ -31,8 +32,11 @@ const els = {
   previewEmpty: document.querySelector("#previewEmpty"),
   uploadStatus: document.querySelector("#uploadStatus"),
   ocrText: document.querySelector("#ocrText"),
+  openRouterKey: document.querySelector("#openRouterKey"),
+  openRouterModel: document.querySelector("#openRouterModel"),
   sampleText: document.querySelector("#sampleText"),
   runExtraction: document.querySelector("#runExtraction"),
+  runAiExtraction: document.querySelector("#runAiExtraction"),
   reviewForm: document.querySelector("#reviewForm"),
   validationList: document.querySelector("#validationList"),
   recordState: document.querySelector("#recordState"),
@@ -53,7 +57,10 @@ els.fileInput.addEventListener("change", handleFile);
 els.sampleText.addEventListener("click", () => {
   els.ocrText.value = sampleText;
 });
+els.openRouterKey.value = sessionStorage.getItem(OPENROUTER_KEY) || "";
+els.openRouterKey.addEventListener("input", () => sessionStorage.setItem(OPENROUTER_KEY, els.openRouterKey.value.trim()));
 els.runExtraction.addEventListener("click", runExtraction);
+els.runAiExtraction.addEventListener("click", runOpenRouterExtraction);
 els.saveRecord.addEventListener("click", saveReviewedRecord);
 els.clearCurrent.addEventListener("click", clearCurrent);
 els.searchInput.addEventListener("input", renderHistory);
@@ -102,6 +109,146 @@ function runExtraction() {
   currentRecord = createRecord(fileName, parsed, "Needs review", source);
   renderReview();
   location.hash = "#review";
+}
+
+async function runOpenRouterExtraction() {
+  if (!currentFile) {
+    setExtractionMessage("Upload an image or PDF before running AI extraction.", true);
+    return;
+  }
+
+  const apiKey = els.openRouterKey.value.trim();
+  if (!apiKey) {
+    setExtractionMessage("Paste your OpenRouter API key first. It is stored only in this browser session.", true);
+    return;
+  }
+
+  const model = els.openRouterModel.value.trim() || "google/gemini-2.5-flash";
+  els.runAiExtraction.disabled = true;
+  els.runAiExtraction.textContent = "Extracting...";
+  setExtractionMessage(`Calling OpenRouter ${model} for document extraction...`, false);
+
+  try {
+    const dataUrl = await fileToDataUrl(currentFile);
+    const aiFields = await extractWithOpenRouter({ apiKey, model, dataUrl, fileName: currentFile.name });
+    currentRecord = createRecord(currentFile.name, withConfidence(aiFields.fields, aiFields.rawText || "OpenRouter vision extraction", 84), "Needs review", `OpenRouter ${model}`);
+
+    if (aiFields.confidence) {
+      currentRecord.confidences = {
+        ...currentRecord.confidences,
+        ...normalizeConfidence(aiFields.confidence),
+      };
+    }
+
+    renderReview();
+    location.hash = "#review";
+  } catch (error) {
+    setExtractionMessage(`AI extraction failed: ${error.message}`, true);
+  } finally {
+    els.runAiExtraction.disabled = false;
+    els.runAiExtraction.textContent = "Extract from image with AI";
+  }
+}
+
+async function extractWithOpenRouter({ apiKey, model, dataUrl, fileName }) {
+  const prompt = `Extract a manufacturing operational record from this uploaded document.
+Return only valid JSON, with no markdown.
+Use this exact shape:
+{
+  "fields": {
+    "date": "YYYY-MM-DD or empty",
+    "shift": "A, B, C, or empty",
+    "employeeNumber": "employee id or empty",
+    "operationCode": "OP-123 format or empty",
+    "machineNumber": "MC-014 format or empty",
+    "workOrderNumber": "WO-78213 format or empty",
+    "quantityProduced": number or "",
+    "timeTaken": number or ""
+  },
+  "confidence": {
+    "date": 0-100,
+    "shift": 0-100,
+    "employeeNumber": 0-100,
+    "operationCode": 0-100,
+    "machineNumber": 0-100,
+    "workOrderNumber": 0-100,
+    "quantityProduced": 0-100,
+    "timeTaken": 0-100
+  }
+}
+If handwriting is unclear, leave the field empty and use low confidence. File name: ${fileName}`;
+
+  const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+      "HTTP-Referer": location.origin,
+      "X-Title": "BiztelAI OpsFlow",
+    },
+    body: JSON.stringify({
+      model,
+      messages: [
+        {
+          role: "user",
+          content: [
+            { type: "text", text: prompt },
+            { type: "image_url", image_url: { url: dataUrl } },
+          ],
+        },
+      ],
+      temperature: 0.1,
+      max_tokens: 900,
+    }),
+  });
+
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(payload.error?.message || `OpenRouter returned HTTP ${response.status}`);
+  }
+
+  const content = payload.choices?.[0]?.message?.content;
+  if (!content) throw new Error("OpenRouter returned an empty response.");
+
+  const parsed = parseJsonContent(content);
+  if (!parsed.fields) throw new Error("Model response did not include a fields object.");
+  return {
+    fields: normalizeFields(parsed.fields),
+    confidence: parsed.confidence || parsed.confidences || {},
+    rawText: content,
+  };
+}
+
+function parseJsonContent(content) {
+  const text = Array.isArray(content)
+    ? content.map((item) => item.text || "").join("\n")
+    : String(content);
+  const cleaned = text.replace(/```json|```/g, "").trim();
+  const start = cleaned.indexOf("{");
+  const end = cleaned.lastIndexOf("}");
+  if (start === -1 || end === -1) throw new Error("Model did not return JSON.");
+  return JSON.parse(cleaned.slice(start, end + 1));
+}
+
+function normalizeConfidence(confidence) {
+  return Object.fromEntries(schema.map((field) => {
+    const value = Number(confidence[field.key]);
+    return [field.key, Number.isFinite(value) ? Math.max(0, Math.min(100, Math.round(value))) : 65];
+  }));
+}
+
+function fileToDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = () => reject(new Error("Could not read uploaded file."));
+    reader.readAsDataURL(file);
+  });
+}
+
+function setExtractionMessage(message, isError) {
+  els.uploadStatus.textContent = message;
+  els.uploadStatus.className = isError ? "pill error" : "pill warn";
 }
 
 function parseText(text) {

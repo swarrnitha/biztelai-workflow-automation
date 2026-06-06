@@ -9,13 +9,14 @@
 - Converted ambiguous assignment requirements into a concrete product workflow.
 - Designed a pragmatic schema for manufacturing operational records.
 - Implemented upload, preview, extraction, confidence, validation, dashboard, search, and history in a small client-side app.
+- Added optional OpenRouter vision extraction so uploaded document images/PDFs can be converted into the same structured schema.
 - Drafted README setup instructions and demo-video checklist.
 
 ## Prompting and Debugging Workflow
 
 - Started from the assignment statement and extracted the core user journeys.
 - Prioritized end-to-end usability over backend complexity.
-- Used deterministic mock extraction where real OCR would require external credentials, while still making confidence and review behavior explicit.
+- Used deterministic mock extraction as a fallback where real OCR is unavailable, while also adding an optional OpenRouter path for real AI extraction.
 - Planned the validation rules around real operational failure modes: missing required fields, invalid codes, suspicious quantities, time ranges, and duplicate work orders.
 
 ## Manual Intervention

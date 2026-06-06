@@ -56,8 +56,19 @@
         <div class="ocr-box">
           <label for="ocrText">OCR / transcribed text</label>
           <textarea id="ocrText" rows="6" placeholder="Paste OCR text here if available. Example: Date 2026-06-04 Shift B Emp E1042 Op OP-220 Machine MC-014 WO WO-78213 Qty 1240 Time 6.5"></textarea>
+          <div class="ai-config">
+            <div>
+              <label for="openRouterKey">OpenRouter API key</label>
+              <input id="openRouterKey" type="password" placeholder="Paste sk-or-v1... key for this browser session" autocomplete="off" />
+            </div>
+            <div>
+              <label for="openRouterModel">Vision model</label>
+              <input id="openRouterModel" value="google/gemini-2.5-flash" />
+            </div>
+          </div>
           <div class="actions">
             <button id="sampleText" class="secondary">Insert sample OCR text</button>
+            <button id="runAiExtraction" class="secondary">Extract from image with AI</button>
             <button id="runExtraction">Run extraction</button>
           </div>
         </div>
