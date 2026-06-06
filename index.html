@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BiztelAI OpsFlow</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark">B</div>
+        <div>
+          <strong>BiztelAI OpsFlow</strong>
+          <span>Manufacturing document intelligence</span>
+        </div>
+      </div>
+      <nav>
+        <a href="#upload" class="active">Upload</a>
+        <a href="#review">Review</a>
+        <a href="#dashboard">Dashboard</a>
+        <a href="#history">History</a>
+      </nav>
+    </aside>
+
+    <main>
+      <section class="topbar">
+        <div>
+          <p class="eyebrow">AI-powered workflow automation</p>
+          <h1>Digitize shop-floor records into validated operational data</h1>
+        </div>
+        <button id="seedDemo" class="secondary">Load demo records</button>
+      </section>
+
+      <section id="upload" class="panel">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">01 Upload</p>
+            <h2>Document Intake</h2>
+          </div>
+          <span id="uploadStatus" class="pill">No active file</span>
+        </div>
+        <div class="upload-grid">
+          <label class="dropzone" for="fileInput">
+            <input id="fileInput" type="file" accept="image/*,.pdf" />
+            <span class="upload-icon">+</span>
+            <strong>Upload image or PDF</strong>
+            <small>Preview, parse, validate, and save reviewed production records.</small>
+          </label>
+          <div class="preview-shell">
+            <div id="previewEmpty" class="empty-state">Document preview appears here</div>
+            <img id="imagePreview" alt="Uploaded document preview" hidden />
+            <iframe id="pdfPreview" title="PDF preview" hidden></iframe>
+          </div>
+        </div>
+        <div class="ocr-box">
+          <label for="ocrText">OCR / transcribed text</label>
+          <textarea id="ocrText" rows="6" placeholder="Paste OCR text here if available. Example: Date 2026-06-04 Shift B Emp E1042 Op OP-220 Machine MC-014 WO WO-78213 Qty 1240 Time 6.5"></textarea>
+          <div class="actions">
+            <button id="sampleText" class="secondary">Insert sample OCR text</button>
+            <button id="runExtraction">Run extraction</button>
+          </div>
+        </div>
+      </section>
+
+      <section id="review" class="panel">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">02 Review</p>
+            <h2>Extracted Record</h2>
+          </div>
+          <span id="recordState" class="pill warn">Awaiting extraction</span>
+        </div>
+        <div id="reviewForm" class="form-grid"></div>
+        <div class="validation-layout">
+          <div>
+            <h3>Validation Exceptions</h3>
+            <ul id="validationList" class="validation-list"></ul>
+          </div>
+          <div>
+            <h3>Extraction Notes</h3>
+            <p id="extractionNotes" class="notes">Upload a document and run extraction.</p>
+          </div>
+        </div>
+        <div class="actions">
+          <button id="saveRecord">Save reviewed record</button>
+          <button id="clearCurrent" class="secondary">Clear current</button>
+        </div>
+      </section>
+
+      <section id="dashboard" class="panel">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">03 Analytics</p>
+            <h2>Operations Dashboard</h2>
+          </div>
+          <span id="lastUpdated" class="pill">Live from reviewed records</span>
+        </div>
+        <div id="kpis" class="kpi-grid"></div>
+        <div class="charts">
+          <div>
+            <h3>Shift Summary</h3>
+            <div id="shiftChart" class="bar-chart"></div>
+          </div>
+          <div>
+            <h3>Machine Quantity</h3>
+            <div id="machineChart" class="bar-chart"></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="history" class="panel">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">04 Search</p>
+            <h2>Upload & Record History</h2>
+          </div>
+          <input id="searchInput" class="search" placeholder="Search WO, machine, employee, shift" />
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Document</th>
+                <th>Date</th>
+                <th>Shift</th>
+                <th>Work Order</th>
+                <th>Machine</th>
+                <th>Qty</th>
+                <th>Status</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="historyRows"></tbody>
+          </table>
+        </div>
+        <div class="upload-history">
+          <h3>Recent Uploads</h3>
+          <div id="uploadRows" class="upload-list"></div>
+        </div>
+      </section>
+    </main>
+
+    <script src="./app.js"></script>
+  </body>
+</html>
